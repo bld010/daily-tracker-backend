@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using Microsoft.Azure.Cosmos;
 using Program;
+using Microsoft.Extensions.Configuration;
 
 namespace daily_tracker
 {
@@ -30,13 +31,27 @@ namespace daily_tracker
         private string containerId = "daily-notes";
         private object DiaryItem;
 
+        public static IConfigurationRoot Configuration { get; set; }
+
         public static async Task Main(string[] args)
         {
+
+            var builder = new ConfigurationBuilder();
+
+            builder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            builder.AddUserSecrets<Program>();
+
+            Configuration = builder.Build();
+
+            var _apiKey = Configuration["DailyTrackerSecrets:CosmosPrimaryKey"];
+
+
+
             try
             {
                 Console.WriteLine("Beginning operations...\n");
                 Program p = new Program();
-                await p.GetStartedDemoAsync();
+                await p.GetStartedDemoAsync(_apiKey);
 
             }
             catch (CosmosException de)
@@ -58,10 +73,10 @@ namespace daily_tracker
         /*
             Entry point to call methods that operate on Azure Cosmos DB resources in this sample
         */
-        public async Task GetStartedDemoAsync()
+        public async Task GetStartedDemoAsync(string apiKey)
         {
             // Create a new instance of the Cosmos Client
-            this.cosmosClient = new CosmosClient(EndpointUri, PrimaryKey, new CosmosClientOptions()
+            this.cosmosClient = new CosmosClient(EndpointUri, apiKey, new CosmosClientOptions()
             {
                 ConnectionMode = ConnectionMode.Gateway
             });
